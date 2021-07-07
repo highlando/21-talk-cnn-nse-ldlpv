@@ -1,9 +1,8 @@
 ---
 author: 
- - Jan Heiland (MPI Magdeburg)
- - Peter Benner (MPI Magdeburg)
-title: Tensor-Galerkin POD for UQ in PDEs with Multivariate Random Parameters
-subtitle: virtuelle GAMM 202021 an der Uni Kassel
+ - Jan Heiland & Peter Benner (MPI Magdeburg)
+title: Convolutional AEs for low-dimensional parameterizations of Navier-Stokes flow
+subtitle: IFAC Seminar -- Data-driven Methods in Control -- 2021
 title-slide-attributes:
     data-background-image: pics/mpi-bridge.gif
 parallaxBackgroundImage: pics/csc-en.svg
@@ -17,7 +16,33 @@ $$\dot x = f(x) + Bu$$
 
 ---
 
-## Control of Nonlinear Large-Scale Systems
+## {data-background-video="pics/triple_swingup_slomo.MP4"}
+
+. . .
+
+::: {style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;"}
+
+Control of an inverted pendulum
+
+ * 9 degrees of freedom
+ * but nonlinear controller.
+
+:::
+
+## {data-background-image="pics/dbrc-v_Re50_stst_cm-bbw.png"}
+
+. . .
+
+::: {style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;"}
+
+Stabilization of a laminar flow
+
+ * 50'000 degrees of freedom
+ * but linear regulator.
+
+:::
+
+## Control of Nonlinear & Large-Scale Systems
 
 A general approach would include
 
@@ -25,10 +50,6 @@ A general approach would include
  * model reduction
  * data-driven surrogate models
  * all of it?!
-
-## This talk:
-
-???
 
 # SDC Representation
 $$
@@ -49,17 +70,38 @@ with some $$A\colon \mathbb R^{n} \to \mathbb R^{n\times n}.$$
  u=-[B^*P(x)]\,x.
  $$
 
+## Nonlinear SDRE Feedback
 
-## Setup
+ * Set 
+ $$
+ u=-[B^TP(x)]\,x.
+ $$
+ * with $P(x)$ as the solution to the state-dependent Riccati equation
+$$
+A(x)^TP + PA(x) - PBB^TP + C^TC=0
+$$
+ 
+ * the system $$\dot x = f(x) + Bu \;=[A(x)- BB^TP(x)]\,x$$ can be controlled towards an equilibrium; see, e.g., @BanLT07.
+
+## Linear Updates as an Alternative
+
+**Theorem** @BenH18 
+
+* ...
+
+* If $P_0$ is the Riccati solution for $x=x_0$
+
+* and if $E$ solves the **linear** equation
+$$A(x)E + E(A(x_0)-BB^TP_0)=A(x_0)-A(x)$$
+
+* with $\|E\| \leq \epsilon < 1$,
+
+* then $u=-B^TP_0(I+E)^{-1}$ stabilizes the system.
+
 $$
 \DeclareMathOperator{\spann}{span}
 \DeclareMathOperator{\Re}{Re}
 $$
-
-Vice versa:
-
-> Theorem: The $\hat s$-dimensional subspace $\hat S\subset S$ that optimally parametrizes $y\in S\otimes X \otimes W$ in $\hat S \otimes X \otimes W$ is defined by the $\hat s$ leading mode-(1) singular vectors of $\mathbf Y \in \mathbb R^{s \times r \times p}$.
-
 
 # LPV Representation
 
@@ -140,11 +182,13 @@ V =
 V_1 & V_2 & \dotsm & V_r
 \end{bmatrix},
 $$
-say, a *POD* basis with $v(t) \approx VV^Tv(t)=:\tilde v(t)$.
+a *POD* basis with $$v(t) \approx VV^Tv(t)=:\tilde v(t),$$
 
-* Then $\rho(v(t)) = V^Tv(t)$ is a parametrization
+* then $$\rho(v(t)) = V^Tv(t)$$ is a parametrization.
 
-* and with $\tilde v = VV^Tv = V\rho = \sum_{k=1}^rV_k\rho_k$
+---
+
+* And with $$\tilde v = VV^Tv = V\rho = \sum_{k=1}^rV_k\rho_k,$$
 
 * the NSE has the low-dimensional LPV representation via
 $$
@@ -173,25 +217,41 @@ Lee/Carlberg (2019): *MOR of dynamical systems on nonlinear manifolds using deep
 Kim/Choi/Widemann/Zodi (2020): *Efficient nonlinear manifold reduced order model*
 :::
 
-## Convolution Neural Networks for NSE
+## Convolution Autoencoders for NSE
 
 1. Consider solution snapshots $v(t_k)$ as pictures
+
 2. Learn convolutional kernels to extract relevant features
+
 3. While extracting features, reduce the dimensions
+
 4. Encode $v(t_k)$ in a low-dimensional $\rho_k$.
 
-## Example Architecture Implementation
+## Our Example Architecture Implementation
 
-Comes here
+
+## {data-background-image="pics/nse-cnn.jpg"}
+
+. . .
+
+::: {style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;"}
+
+ * A number of convolutional layers for feature extraction and reduction
+
+ * A full linear layer with nonlinear activation for the final encoding $\rho\in \mathbb R^{r}$
+
+ * A linear layer (w/o activation) that expands $\rho \to \tilde \rho\in \mathbb R^{k}$.
+
+:::
 
 ---
 
 Input: 
 
  * velocity snapshots $v_i$ of an FEM simulation with $n=50'000$ degrees of freedom
- * interpolated to two `H x W` pictures -- makes a `2 x H x W` tensor
+ * interpolated to two `HxW` pictures -- makes a `2xHxW` tensor
 
-## Train for minimizing:
+## Training for minimizing:
 $$
 \| v_i - VW\rho(v_i)\|^2_M
 $$
@@ -216,27 +276,14 @@ Averaged (nonlinear) projection error:
 
 ## ... and Outlook
 
- * Multidimensional Galerkin POD applies naturally for FEM/PCE discretizations.
+ * Proof of concept that CNN can *improve* POD at very low dimensions
 
- * Significant savings of computation time and memory.
+ * Can include the target (the paramtrized convection) in the training
 
- * Outlook: Optimal control and time dependent problems.
+ * Outlook: Use for nonlinear controller design.
 
 . . .
 
 Thank You!
 
-## Resources
-
-* Submitted to *Int. J. Numerical Methods in Engineering*
-
-* Preprint: [arxiv:2009.01055](https://arxiv.org/abs/2009.01055)
-
-* Code: [doi:10.5281/zenodo.4005724](https://doi.org/10.5281/zenodo.4005724)
-
 ---
-
----
-nocite: |
-  @SoiG04, @BabTZ04
-...
