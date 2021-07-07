@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Jan Heiland &amp; Peter Benner (MPI Magdeburg)">
+  <title>Convolutional AEs for low-dimensional parameterizations of Navier-Stokes flow</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@^4//dist/reset.css">
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@^4//dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@^4//dist/theme/solarized.css" id="theme">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" data-background-image="pics/mpi-bridge.gif">
+  <h1 class="title">Convolutional AEs for low-dimensional parameterizations of Navier-Stokes flow</h1>
+  <p class="subtitle">IFAC Seminar – Data-driven Methods in Control – 2021</p>
+  <p class="author">Jan Heiland &amp; Peter Benner (MPI Magdeburg)</p>
+</section>
+
+<section>
+<section id="introduction" class="title-slide slide level1">
+<h1>Introduction</h1>
+<p><span class="math display">\[\dot x = f(x) + Bu\]</span></p>
+</section>
+<section id="section" class="slide level2" data-background-video="pics/triple_swingup_slomo.MP4">
+<h2 data-background-video="pics/triple_swingup_slomo.MP4"></h2>
+<div class="fragment">
+<div style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;">
+<p>Control of an inverted pendulum</p>
+<ul>
+<li>9 degrees of freedom</li>
+<li>but nonlinear controller.</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="section-1" class="slide level2" data-background-image="pics/dbrc-v_Re50_stst_cm-bbw.png">
+<h2 data-background-image="pics/dbrc-v_Re50_stst_cm-bbw.png"></h2>
+<div class="fragment">
+<div style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;">
+<p>Stabilization of a laminar flow</p>
+<ul>
+<li>50’000 degrees of freedom</li>
+<li>but linear regulator.</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="control-of-nonlinear-large-scale-systems" class="slide level2">
+<h2>Control of Nonlinear &amp; Large-Scale Systems</h2>
+<p>A general approach would include</p>
+<ul>
+<li>powerful backends (linear algebra / optimization)</li>
+<li>model reduction</li>
+<li>data-driven surrogate models</li>
+<li>all of it?!</li>
+</ul>
+</section></section>
+<section>
+<section id="sdc-representation" class="title-slide slide level1">
+<h1>SDC Representation</h1>
+<p><span class="math display">\[
+\dot x = [A(x)]\,x + Bu
+\]</span></p>
+</section>
+<section class="slide level2">
+
+<ul>
+<li><p>Under mild conditions, the flow <span class="math inline">\(f(x)\)</span> can be factorized <span class="math display">\[
+\dot x = [A(x)]\,x + Bu
+\]</span> – a <em>state dependent coefficient</em> system – with some <span class="math display">\[A\colon \mathbb R^{n} \to \mathbb R^{n\times n}.\]</span></p></li>
+<li><p>Control through a <em>state-dependent state-feedback law</em> <span class="math display">\[
+ u=-[B^*P(x)]\,x.
+ \]</span></p></li>
+</ul>
+</section>
+<section id="nonlinear-sdre-feedback" class="slide level2">
+<h2>Nonlinear SDRE Feedback</h2>
+<ul>
+<li><p>Set <span class="math display">\[
+ u=-[B^TP(x)]\,x.
+ \]</span></p></li>
+<li><p>with <span class="math inline">\(P(x)\)</span> as the solution to the state-dependent Riccati equation <span class="math display">\[
+A(x)^TP + PA(x) - PBB^TP + C^TC=0
+\]</span></p></li>
+<li><p>the system <span class="math display">\[\dot x = f(x) + Bu \;=[A(x)- BB^TP(x)]\,x\]</span> can be controlled towards an equilibrium; see, e.g., <span class="citation" data-cites="BanLT07">Banks, Lewis, and Tran (2007)</span>.</p></li>
+</ul>
+</section>
+<section id="linear-updates-as-an-alternative" class="slide level2">
+<h2>Linear Updates as an Alternative</h2>
+<p><strong>Theorem</strong> <span class="citation" data-cites="BenH18">Benner and Heiland (2018)</span></p>
+<ul>
+<li><p>…</p></li>
+<li><p>If <span class="math inline">\(P_0\)</span> is the Riccati solution for <span class="math inline">\(x=x_0\)</span></p></li>
+<li><p>and if <span class="math inline">\(E\)</span> solves the <strong>linear</strong> equation <span class="math display">\[A(x)E + E(A(x_0)-BB^TP_0)=A(x_0)-A(x)\]</span></p></li>
+<li><p>with <span class="math inline">\(\|E\| \leq \epsilon &lt; 1\)</span>,</p></li>
+<li><p>then <span class="math inline">\(u=-B^TP_0(I+E)^{-1}\)</span> stabilizes the system.</p></li>
+</ul>
+<p><span class="math display">\[
+\DeclareMathOperator{\spann}{span}
+\DeclareMathOperator{\Re}{Re}
+\]</span></p>
+</section></section>
+<section>
+<section id="lpv-representation" class="title-slide slide level1">
+<h1>LPV Representation</h1>
+<p><span class="math display">\[
+\dot x \approx [A_0+\Sigma \,\rho_k(x)A_k]\, x + Bu
+\]</span></p>
+</section>
+<section class="slide level2">
+
+<p>The <em>linear parameter varying</em> (LPV) representation/approximation <span class="math display">\[
+\dot x = f(x) + Bu = [\tilde A(\rho(x))]\,x + Bu \approx  [A_0+\Sigma \,\rho_k(x)A_k]\, x + Bu
+\]</span> with <strong>affine parameter dependency</strong> can be exploited for designing nonlinear controller through scheduling.</p>
+</section>
+<section id="scheduling-of-h_infty-controllers" class="slide level2">
+<h2>Scheduling of <span class="math inline">\(H_\infty\)</span> Controllers</h2>
+<ul>
+<li><p>If <span class="math inline">\(\rho(x)\in \mathbb R^{k}\)</span> can be confined to a bounded polygon,</p></li>
+<li><p>there is globally stabilizing <span class="math inline">\(H_\infty\)</span> controller</p></li>
+<li><p>that can be computed</p></li>
+<li><p>through solving <span class="math inline">\(k\)</span> <strong>coupled LMI</strong> in the size of the state dimension;</p></li>
+</ul>
+<p>see <span class="citation" data-cites="ApkGB95">Apkarian, Gahinet, and Becker (1995)</span> .</p>
+</section>
+<section id="series-expansion-of-sdre-solution" class="slide level2">
+<h2>Series Expansion of SDRE Solution</h2>
+<p>For <span class="math inline">\(A(x)=\sum_{k=1}^r\rho_k(x)A_k\)</span>, the solution <span class="math inline">\(P\)</span> to the SDRE <span class="math display">\[
+A(x)^TP + PA(x) - PBB^TP + C^TC=0
+\]</span> can be expanded in a series <span class="math display">\[
+P(x) = P_0 + \sum_{|\alpha| &gt; 0}\rho(x)^{(\alpha)}P_{\alpha}
+\]</span> where <span class="math inline">\(P_0\)</span> solves a Riccati equation and <span class="math inline">\(P_\alpha\)</span> solve Lyapunov (linear!) equations;</p>
+<p>see <span class="citation" data-cites="BeeTB00">Beeler, Tran, and Banks (2000)</span>.</p>
+</section>
+<section id="we-see" class="slide level2">
+<h2>We see</h2>
+<p>Manifold opportunities if only <span class="math inline">\(k\)</span> was small.</p>
+</section></section>
+<section>
+<section id="low-dimensional-lpv" class="title-slide slide level1">
+<h1>Low-dimensional LPV</h1>
+<p><strong>Approximation</strong> of <em>Navier-Stokes Equations</em> by <em>Convolutional Neural Networks</em></p>
+</section>
+<section id="section-2" class="slide level2" data-background-image="pics/cw-Re60-t161-cm-bbw.png" data-background-size="cover">
+<h2 data-background-image="pics/cw-Re60-t161-cm-bbw.png" data-background-size="cover"></h2>
+<div class="fragment">
+<div style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;">
+<p>The <em>Navier-Stokes</em> equations</p>
+<p><span class="math display">\[
+\dot v + (v\cdot \nabla) v- \frac{1}{\Re}\Delta v + \nabla p= f, 
+\]</span></p>
+<p><span class="math display">\[
+\nabla \cdot v = 0.
+\]</span></p>
+</div>
+</div>
+</section>
+<section class="slide level2">
+
+<ul>
+<li><p>Let <span class="math inline">\(v\)</span> be the velocity solution and <span class="math display">\[
+V =
+\begin{bmatrix}
+V_1 &amp; V_2 &amp; \dotsm &amp; V_r
+\end{bmatrix},
+\]</span> a <em>POD</em> basis with <span class="math display">\[v(t) \approx VV^Tv(t)=:\tilde v(t),\]</span></p></li>
+<li><p>then <span class="math display">\[\rho(v(t)) = V^Tv(t)\]</span> is a parametrization.</p></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<ul>
+<li><p>And with <span class="math display">\[\tilde v = VV^Tv = V\rho = \sum_{k=1}^rV_k\rho_k,\]</span></p></li>
+<li><p>the NSE has the low-dimensional LPV representation via <span class="math display">\[
+(v\cdot \nabla) v \approx (\tilde v \cdot \nabla) v = [\sum_{k=1}^r\rho_k(V_k\cdot \nabla)]\,v.
+\]</span></p></li>
+</ul>
+</section>
+<section id="question" class="slide level2">
+<h2>Question</h2>
+<p>Can we do better than POD?</p>
+</section>
+<section id="section-3" class="slide level2" data-background-image="pics/scrsho-lee-cb.png">
+<h2 data-background-image="pics/scrsho-lee-cb.png"></h2>
+<div class="fragment">
+<div style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;">
+<p>Lee/Carlberg (2019): <em>MOR of dynamical systems on nonlinear manifolds using deep convolutional autoencoders</em></p>
+</div>
+</div>
+</section>
+<section id="section-4" class="slide level2" data-background-image="pics/scrsho-choi.png">
+<h2 data-background-image="pics/scrsho-choi.png"></h2>
+<div class="fragment">
+<div style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;">
+<p>Kim/Choi/Widemann/Zodi (2020): <em>Efficient nonlinear manifold reduced order model</em></p>
+</div>
+</div>
+</section>
+<section id="convolution-autoencoders-for-nse" class="slide level2">
+<h2>Convolution Autoencoders for NSE</h2>
+<ol type="1">
+<li><p>Consider solution snapshots <span class="math inline">\(v(t_k)\)</span> as pictures</p></li>
+<li><p>Learn convolutional kernels to extract relevant features</p></li>
+<li><p>While extracting features, reduce the dimensions</p></li>
+<li><p>Encode <span class="math inline">\(v(t_k)\)</span> in a low-dimensional <span class="math inline">\(\rho_k\)</span>.</p></li>
+</ol>
+</section>
+<section id="our-example-architecture-implementation" class="slide level2">
+<h2>Our Example Architecture Implementation</h2>
+</section>
+<section id="section-5" class="slide level2" data-background-image="pics/nse-cnn.jpg">
+<h2 data-background-image="pics/nse-cnn.jpg"></h2>
+<div class="fragment">
+<div style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;">
+<ul>
+<li><p>A number of convolutional layers for feature extraction and reduction</p></li>
+<li><p>A full linear layer with nonlinear activation for the final encoding <span class="math inline">\(\rho\in \mathbb R^{r}\)</span></p></li>
+<li><p>A linear layer (w/o activation) that expands <span class="math inline">\(\rho \to \tilde \rho\in \mathbb R^{k}\)</span>.</p></li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide level2">
+
+<p>Input:</p>
+<ul>
+<li>velocity snapshots <span class="math inline">\(v_i\)</span> of an FEM simulation with <span class="math inline">\(n=50&#39;000\)</span> degrees of freedom</li>
+<li>interpolated to two <code>HxW</code> pictures – makes a <code>2xHxW</code> tensor</li>
+</ul>
+</section>
+<section id="training-for-minimizing" class="slide level2">
+<h2>Training for minimizing:</h2>
+<p><span class="math display">\[
+\| v_i - VW\rho(v_i)\|^2_M
+\]</span> which includes</p>
+<ul>
+<li>the POD modes <span class="math inline">\(V\in \mathbb R^{n\times k}\)</span></li>
+<li>a learned weight matrix <span class="math inline">\(W\in \mathbb R^{k\times r}\)</span></li>
+<li>the mass matrix <span class="math inline">\(M\)</span> of the FEM discretization.</li>
+</ul>
+</section>
+<section id="going-pinn" class="slide level2">
+<h2>Going PINN</h2>
+</section>
+<section id="results" class="slide level2">
+<h2>Results</h2>
+<p>Averaged (nonlinear) projection error:</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: right;"></th>
+<th style="text-align: center;">CNN</th>
+<th style="text-align: center;">POD</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><code>k=5</code></td>
+<td style="text-align: center;"><code>1e-2</code></td>
+<td style="text-align: center;"><code>1e-3</code></td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="conclusion" class="title-slide slide level1">
+<h1>Conclusion</h1>
+
+</section>
+<section id="and-outlook" class="slide level2">
+<h2>… and Outlook</h2>
+<ul>
+<li><p>Proof of concept that CNN can <em>improve</em> POD at very low dimensions</p></li>
+<li><p>Can include the target (the paramtrized convection) in the training</p></li>
+<li><p>Outlook: Use for nonlinear controller design.</p></li>
+</ul>
+<div class="fragment">
+<p>Thank You!</p>
+</div>
+</section>
+<section class="slide level2">
+
+<div id="refs" class="references hanging-indent" role="doc-bibliography">
+<div id="ref-ApkGB95">
+<p>Apkarian, Pierre, Pascal Gahinet, and Greg Becker. 1995. “Self-Scheduled <span class="math inline">\(H_\infty\)</span> Control of Linear Parameter-Varying Systems: A Design Example.” <em>Autom.</em> 31 (9): 1251–61. <a href="https://doi.org/10.1016/0005-1098(95)00038-X">https://doi.org/10.1016/0005-1098(95)00038-X</a>.</p>
+</div>
+<div id="ref-BanLT07">
+<p>Banks, H. T., B. M. Lewis, and H. T. Tran. 2007. “Nonlinear Feedback Controllers and Compensators: A State-Dependent Riccati Equation Approach.” <em>Comput. Optim. Appl.</em> 37 (2): 177–218. <a href="https://doi.org/10.1007/s10589-007-9015-2">https://doi.org/10.1007/s10589-007-9015-2</a>.</p>
+</div>
+<div id="ref-BeeTB00">
+<p>Beeler, S. C., H. T. Tran, and H. T. Banks. 2000. “Feedback control methodologies for nonlinear systems.” <em>J. Optim. Theory Appl.</em> 107 (1): 1–33.</p>
+</div>
+<div id="ref-BenH18">
+<p>Benner, Peter, and Jan Heiland. 2018. “Exponential Stability and Stabilization of Extended Linearizations via Continuous Updates of Riccati Based Feedback.” <em>Internat. J. Robust and Nonlinear Cont.</em> 28 (4): 1218–32. <a href="https://doi.org/10.1002/rnc.3949">https://doi.org/10.1002/rnc.3949</a>.</p>
+</div>
+</div>
+</section></section>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/reveal.js@^4//dist/reveal.js"></script>
+
+  // reveal.js plugins
+  <script src="https://unpkg.com/reveal.js@^4//plugin/notes/notes.js"></script>
+  <script src="https://unpkg.com/reveal.js@^4//plugin/search/search.js"></script>
+  <script src="https://unpkg.com/reveal.js@^4//plugin/zoom/zoom.js"></script>
+  <script src="https://unpkg.com/reveal.js@^4//plugin/math/math.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+        // Push each slide change to the browser history
+        history: true,
+        // Number of slides away from the current that are visible
+        viewDistance: 15,
+        // Parallax background image
+        parallaxBackgroundImage: 'pics/csc-en.svg', // e.g. "'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg'"
+        // Parallax background size
+        parallaxBackgroundSize: '1000px 1200px', // CSS syntax, e.g. "2100px 900px"
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+        height: 880,
+        // Factor of the display size that should remain empty around the content
+        margin: 0.05,
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    </body>
+</html>
