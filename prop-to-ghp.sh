@@ -1,4 +1,4 @@
-git checkout main
+git checkout master
 git add slides.md
 git commit -m 'updated the slides md'
 
@@ -11,4 +11,4 @@ LSTCHSH=$(git rev-parse HEAD)
 
 git checkout gh-pages
 git cherry-pick $LSTCHSH  # merge only the last commit
-git push
+git push gh-origin gh-pages

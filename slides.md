@@ -47,7 +47,7 @@ Stabilization of a laminar flow
 A general approach would include
 
  * powerful backends (linear algebra / optimization)
- * model reduction
+ * exploitation of general structures
  * data-driven surrogate models
  * all of it?!
 
@@ -175,14 +175,14 @@ $$
 
 ---
 
-* Let $v$ be the velocity solution and 
+* Let $v$ be the velocity solution and let
 $$
 V =
 \begin{bmatrix}
 V_1 & V_2 & \dotsm & V_r
-\end{bmatrix},
+\end{bmatrix}
 $$
-a *POD* basis with $$v(t) \approx VV^Tv(t)=:\tilde v(t),$$
+be a, say, *POD* basis with $$v(t) \approx VV^Tv(t)=:\tilde v(t),$$
 
 * then $$\rho(v(t)) = V^Tv(t)$$ is a parametrization.
 
@@ -219,11 +219,11 @@ Kim/Choi/Widemann/Zodi (2020): *Efficient nonlinear manifold reduced order model
 
 ## Convolution Autoencoders for NSE
 
-1. Consider solution snapshots $v(t_k)$ as pictures
+1. Consider solution snapshots $v(t_k)$ as pictures.
 
-2. Learn convolutional kernels to extract relevant features
+2. Learn convolutional kernels to extract relevant features.
 
-3. While extracting features, reduce the dimensions
+3. While extracting the features, we reduce the dimensions.
 
 4. Encode $v(t_k)$ in a low-dimensional $\rho_k$.
 
@@ -244,12 +244,13 @@ Kim/Choi/Widemann/Zodi (2020): *Efficient nonlinear manifold reduced order model
 
 :::
 
----
+## Input:
 
-Input: 
+ * Velocity snapshots $v_i$ of an FEM simulation with $$n=50'000$$ degrees of freedom
 
- * velocity snapshots $v_i$ of an FEM simulation with $n=50'000$ degrees of freedom
- * interpolated to two `HxW` pictures -- makes a `2xHxW` tensor
+ * interpolated to two pictures with `63x95` pixels each
+
+ * makes a `2x63x69` tensor. 
 
 ## Training for minimizing:
 $$
@@ -257,28 +258,62 @@ $$
 $$
 which includes
 
- * the POD modes $V\in \mathbb R^{n\times k}$
- * a learned weight matrix $W\in \mathbb R^{k\times r}$
- * the mass matrix $M$ of the FEM discretization.
+ 1. the POD modes $V\in \mathbb R^{n\times k}$,
+
+ 2. a learned weight matrix $W\in \mathbb R^{k\times r}\colon \rho \mapsto \tilde \rho$,
+
+ 3. the mass matrix $M$ of the FEM discretization.
 
 ## Going PINN
 
+Outlook: 
+the induced low-dimensional affine-linear LPV representation of the convection
+$$\| (v_i\cdot \nabla)v_i - (VW\rho_i \cdot \nabla )v_i\|^2_{M^{-1}}$$
+as the target of the optimization.
+
+Implementation issues:
+
+ * Include FEM operators while
+ * maintaining the *backward* mode of the training.
+
 ## Results
 
+## {data-background-image="pics/plot-one.png" data-background-size="70%"}
+
+<!--
 Averaged (nonlinear) projection error:
 
 || CNN | POD |
 |---:|:----:|:----:|
-|`k=5`| `1e-2` | `1e-3` |
+|`r=3`  | `0.0416` | `0.0645` | 
+|`r=5`  | `0.0248` | `0.0296` |
+|`r=8`  | `0.0176` | `0.0179` |
+|`r=12` | `0.0092` | `0.0086` |
+-->
 
+. . .
+
+::: {style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;"}
+
+Simulation parameters:
+
+ * Cylinder wake at $\Re=40$, time in $[0, 8]$
+ * `1000` snapshots/data points 
+ * 2D-CNN with 4 layers
+ * `kernelsize, stride = 5, 2`.
+ * `batch_size = 40`
+
+:::
 
 # Conclusion
 
 ## ... and Outlook
 
- * Proof of concept that CNN can *improve* POD at very low dimensions
+ * LPV with affine-linear dependencies are attractive if only $k$ is small.
 
- * Can include the target (the paramtrized convection) in the training
+ * Proof of concept that CNN can *improve* POD at very low dimensions.
+
+ * Next: Include the parametrized convection in the training.
 
  * Outlook: Use for nonlinear controller design.
 

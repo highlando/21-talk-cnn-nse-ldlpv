@@ -1,37 +1,21 @@
 ---
-title: Space/PCE genPOD for UQ of PDEs w/ Random Parameters
-author:
- - Peter Benner
+author: 
  - Jan Heiland
-occasions: 
- - Gamm CSE Workshop
- - GAMM Annual Meeting 2021
+ - Peter Benner
+title: Convolutional AEs for low-dimensional parameterizations of Navier-Stokes flow
+occasions:
+ - IFAC Seminar -- Data-driven Methods in Control -- 2021
 ---
 
-# GAMM CSE Workshop 
+# IFAC TC Seminar
 
 ```yaml
-date: 2021-03-17
+date: 2021-07-08
 location: virtual
-tag: 21-GAMM
+tag: IFAC-TC
 ```
 
 ## Target audience
 
- * CSE people
-   * UQ certainly
-   * FEM probably
+ * Control people
 
-# GAMM CSE Workshop 
-
-```yaml
-date: 2021-01-29
-location: virtual
-branch/tag: main
-```
-
-## Target audience
-
- * CSE people
-   * UQ partially
-   * FEM certainly
