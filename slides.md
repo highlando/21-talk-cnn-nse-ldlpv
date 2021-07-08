@@ -16,7 +16,7 @@ $$\dot x = f(x) + Bu$$
 
 ---
 
-## {data-background-video="pics/triple_swingup_slomo.MP4"}
+## {data-background-image="pics/intro-pendel.jpg"}
 
 . . .
 
