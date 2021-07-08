@@ -35,8 +35,8 @@
 <h1>Introduction</h1>
 <p><span class="math display">\[\dot x = f(x) + Bu\]</span></p>
 </section>
-<section id="section" class="slide level2" data-background-video="pics/triple_swingup_slomo.MP4">
-<h2 data-background-video="pics/triple_swingup_slomo.MP4"></h2>
+<section id="section" class="slide level2" data-background-image="pics/intro-pendel.jpg">
+<h2 data-background-image="pics/intro-pendel.jpg"></h2>
 <div class="fragment">
 <div style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;">
 <p>Control of an inverted pendulum</p>
@@ -64,7 +64,7 @@
 <p>A general approach would include</p>
 <ul>
 <li>powerful backends (linear algebra / optimization)</li>
-<li>model reduction</li>
+<li>exploitation of general structures</li>
 <li>data-driven surrogate models</li>
 <li>all of it?!</li>
 </ul>
@@ -172,12 +172,12 @@ P(x) = P_0 + \sum_{|\alpha| &gt; 0}\rho(x)^{(\alpha)}P_{\alpha}
 <section class="slide level2">
 
 <ul>
-<li><p>Let <span class="math inline">\(v\)</span> be the velocity solution and <span class="math display">\[
+<li><p>Let <span class="math inline">\(v\)</span> be the velocity solution and let <span class="math display">\[
 V =
 \begin{bmatrix}
 V_1 &amp; V_2 &amp; \dotsm &amp; V_r
-\end{bmatrix},
-\]</span> a <em>POD</em> basis with <span class="math display">\[v(t) \approx VV^Tv(t)=:\tilde v(t),\]</span></p></li>
+\end{bmatrix}
+\]</span> be a, say, <em>POD</em> basis with <span class="math display">\[v(t) \approx VV^Tv(t)=:\tilde v(t),\]</span></p></li>
 <li><p>then <span class="math display">\[\rho(v(t)) = V^Tv(t)\]</span> is a parametrization.</p></li>
 </ul>
 </section>
@@ -213,9 +213,9 @@ V_1 &amp; V_2 &amp; \dotsm &amp; V_r
 <section id="convolution-autoencoders-for-nse" class="slide level2">
 <h2>Convolution Autoencoders for NSE</h2>
 <ol type="1">
-<li><p>Consider solution snapshots <span class="math inline">\(v(t_k)\)</span> as pictures</p></li>
-<li><p>Learn convolutional kernels to extract relevant features</p></li>
-<li><p>While extracting features, reduce the dimensions</p></li>
+<li><p>Consider solution snapshots <span class="math inline">\(v(t_k)\)</span> as pictures.</p></li>
+<li><p>Learn convolutional kernels to extract relevant features.</p></li>
+<li><p>While extracting the features, we reduce the dimensions.</p></li>
 <li><p>Encode <span class="math inline">\(v(t_k)\)</span> in a low-dimensional <span class="math inline">\(\rho_k\)</span>.</p></li>
 </ol>
 </section>
@@ -234,12 +234,12 @@ V_1 &amp; V_2 &amp; \dotsm &amp; V_r
 </div>
 </div>
 </section>
-<section class="slide level2">
-
-<p>Input:</p>
+<section id="input" class="slide level2">
+<h2>Input:</h2>
 <ul>
-<li>velocity snapshots <span class="math inline">\(v_i\)</span> of an FEM simulation with <span class="math inline">\(n=50&#39;000\)</span> degrees of freedom</li>
-<li>interpolated to two <code>HxW</code> pictures – makes a <code>2xHxW</code> tensor</li>
+<li><p>Velocity snapshots <span class="math inline">\(v_i\)</span> of an FEM simulation with <span class="math display">\[n=50&#39;000\]</span> degrees of freedom</p></li>
+<li><p>interpolated to two pictures with <code>63x95</code> pixels each</p></li>
+<li><p>makes a <code>2x63x69</code> tensor.</p></li>
 </ul>
 </section>
 <section id="training-for-minimizing" class="slide level2">
@@ -247,34 +247,48 @@ V_1 &amp; V_2 &amp; \dotsm &amp; V_r
 <p><span class="math display">\[
 \| v_i - VW\rho(v_i)\|^2_M
 \]</span> which includes</p>
-<ul>
-<li>the POD modes <span class="math inline">\(V\in \mathbb R^{n\times k}\)</span></li>
-<li>a learned weight matrix <span class="math inline">\(W\in \mathbb R^{k\times r}\)</span></li>
-<li>the mass matrix <span class="math inline">\(M\)</span> of the FEM discretization.</li>
-</ul>
+<ol type="1">
+<li><p>the POD modes <span class="math inline">\(V\in \mathbb R^{n\times k}\)</span>,</p></li>
+<li><p>a learned weight matrix <span class="math inline">\(W\in \mathbb R^{k\times r}\colon \rho \mapsto \tilde \rho\)</span>,</p></li>
+<li><p>the mass matrix <span class="math inline">\(M\)</span> of the FEM discretization.</p></li>
+</ol>
 </section>
 <section id="going-pinn" class="slide level2">
 <h2>Going PINN</h2>
+<p>Outlook: the induced low-dimensional affine-linear LPV representation of the convection <span class="math display">\[\| (v_i\cdot \nabla)v_i - (VW\rho_i \cdot \nabla )v_i\|^2_{M^{-1}}\]</span> as the target of the optimization.</p>
+<p>Implementation issues:</p>
+<ul>
+<li>Include FEM operators while</li>
+<li>maintaining the <em>backward</em> mode of the training.</li>
+</ul>
 </section>
 <section id="results" class="slide level2">
 <h2>Results</h2>
-<p>Averaged (nonlinear) projection error:</p>
-<table>
-<thead>
-<tr class="header">
-<th style="text-align: right;"></th>
-<th style="text-align: center;">CNN</th>
-<th style="text-align: center;">POD</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: right;"><code>k=5</code></td>
-<td style="text-align: center;"><code>1e-2</code></td>
-<td style="text-align: center;"><code>1e-3</code></td>
-</tr>
-</tbody>
-</table>
+</section>
+<section id="section-6" class="slide level2" data-background-image="pics/plot-one.png" data-background-size="70%">
+<h2 data-background-image="pics/plot-one.png" data-background-size="70%"></h2>
+<!--
+Averaged (nonlinear) projection error:
+
+|| CNN | POD |
+|---:|:----:|:----:|
+|`r=3`  | `0.0416` | `0.0645` | 
+|`r=5`  | `0.0248` | `0.0296` |
+|`r=8`  | `0.0176` | `0.0179` |
+|`r=12` | `0.0092` | `0.0086` |
+-->
+<div class="fragment">
+<div style="position: absolute; width: 60%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 40px; text-align: left;">
+<p>Simulation parameters:</p>
+<ul>
+<li>Cylinder wake at <span class="math inline">\(\Re=40\)</span>, time in <span class="math inline">\([0, 8]\)</span></li>
+<li><code>1000</code> snapshots/data points</li>
+<li>2D-CNN with 4 layers</li>
+<li><code>kernelsize, stride = 5, 2</code>.</li>
+<li><code>batch_size = 40</code></li>
+</ul>
+</div>
+</div>
 </section></section>
 <section>
 <section id="conclusion" class="title-slide slide level1">
@@ -284,8 +298,9 @@ V_1 &amp; V_2 &amp; \dotsm &amp; V_r
 <section id="and-outlook" class="slide level2">
 <h2>… and Outlook</h2>
 <ul>
-<li><p>Proof of concept that CNN can <em>improve</em> POD at very low dimensions</p></li>
-<li><p>Can include the target (the paramtrized convection) in the training</p></li>
+<li><p>LPV with affine-linear dependencies are attractive if only <span class="math inline">\(k\)</span> is small.</p></li>
+<li><p>Proof of concept that CNN can <em>improve</em> POD at very low dimensions.</p></li>
+<li><p>Next: Include the parametrized convection in the training.</p></li>
 <li><p>Outlook: Use for nonlinear controller design.</p></li>
 </ul>
 <div class="fragment">
