@@ -47,7 +47,7 @@ Stabilization of a laminar flow
 A general approach would include
 
  * powerful backends (linear algebra / optimization)
- * model reduction
+ * exploitation of general structures
  * data-driven surrogate models
  * all of it?!
 
@@ -268,7 +268,7 @@ which includes
 
 Outlook: 
 the induced low-dimensional affine-linear LPV representation of the convection
-$$\| (v_i\cdot \nabla)v_i - \sum _{k=1}^r\rho_k(v_i)([VW]_k\cdot \nabla )v_i\|^2_{M^{-1}}$$
+$$\| (v_i\cdot \nabla)v_i - (VW\rho_i \cdot \nabla )v_i\|^2_{M^{-1}}$$
 as the target of the optimization.
 
 Implementation issues:
@@ -302,13 +302,14 @@ Simulation parameters:
  * 2D-CNN with 4 layers
  * `kernelsize, stride = 5, 2`.
  * `batch_size = 40`
- * `k=30` columns of the POD basis $V$
 
 :::
 
 # Conclusion
 
 ## ... and Outlook
+
+ * LPV with affine-linear dependencies are attractive if only $k$ is small.
 
  * Proof of concept that CNN can *improve* POD at very low dimensions.
 
